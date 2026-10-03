@@ -1,0 +1,38 @@
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Data files (Giữ thư mục nhưng không đẩy dữ liệu lớn lên Git)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Large Results & Model Cache
+results/*
+!results/.gitkeep
+results/*.csv
+results/*.parquet
+
+# Report artifacts
+report/*.pdf
+report/*.docx
+!report/.gitkeep
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
