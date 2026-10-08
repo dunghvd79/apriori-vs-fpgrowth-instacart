@@ -80,7 +80,7 @@ pip install -r requirements.txt
 
    Ghi chú:
    - Chỉ giữ các đơn có >= 2 món (đơn 1 món không sinh được luật), nên support được tính trên các giỏ hàng có từ 2 món trở lên.
-   - Ở mức kệ hàng, nhãn `missing` (sản phẩm chưa phân loại) bị loại bỏ.
+   - Ở mức kệ hàng, nhãn `missing` (sản phẩm chưa phân loại) bị loại bỏ, và quy tắc >= 2 món được áp lại sau khi gom theo kệ (giỏ chỉ còn 1 kệ bị loại), nên mẫu kệ 100k còn 98.491 giỏ.
    - Đầu ra trong `data/processed/`: file `.parquet` (dùng cho khai phá) và `.csv` (để xem bằng Excel, các món phân cách bởi ` | `).
 
 ---

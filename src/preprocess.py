@@ -117,12 +117,14 @@ def nested_sample_order_ids(df_op, sizes, min_basket_size: int, seed: int):
     return {n: shuffled[:n] for n in sorted(sizes)}
 
 
-def build_transactions(df_op, df_products, order_ids, level: str = 'product'):
+def build_transactions(df_op, df_products, order_ids, level: str = 'product', min_basket_size: int = 1):
     """
     Gom các dòng thuộc order_ids thành giao dịch.
 
     Tham số:
         level: 'product' (tên sản phẩm) hoặc 'aisle' (tên kệ hàng, loại trùng trong mỗi đơn).
+        min_basket_size: áp lại quy tắc giỏ tối thiểu SAU khi gom. Cần cho mức kệ hàng,
+            vì một đơn nhiều sản phẩm có thể chỉ còn 1 kệ sau khi bỏ trùng.
 
     Trả về:
         DataFrame gồm các cột: ['order_id', 'items', 'item_count']
@@ -132,8 +134,8 @@ def build_transactions(df_op, df_products, order_ids, level: str = 'product'):
     merged = subset.merge(df_products[['product_id', col]], on='product_id', how='inner')
 
     if level == 'aisle':
-        # Kệ 'missing' là nhãn "chưa phân loại", không phải kệ hàng thật -> loại bỏ
-        merged = merged[merged[col] != 'missing']
+        # Bỏ kệ rỗng (NA) và nhãn 'missing' ("chưa phân loại", không phải kệ hàng thật)
+        merged = merged[merged[col].notna() & (merged[col] != 'missing')]
         merged = merged.drop_duplicates(subset=['order_id', col])
 
     transactions = (
@@ -142,6 +144,7 @@ def build_transactions(df_op, df_products, order_ids, level: str = 'product'):
         .reset_index(name='items')
     )
     transactions['item_count'] = transactions['items'].apply(len)
+    transactions = transactions[transactions['item_count'] >= min_basket_size].reset_index(drop=True)
     return transactions
 
 
@@ -168,6 +171,8 @@ def main():
     parser.add_argument('--seed', type=int, default=42, help="Seed để tái lập kết quả lấy mẫu")
     parser.add_argument('--check_only', action='store_true', help="Chỉ kiểm tra sự tồn tại của file raw và thoát")
     args = parser.parse_args()
+    if any(n <= 0 for n in args.sizes) or args.aisle_size < 0 or args.min_basket_size < 1:
+        parser.error("--sizes phải > 0, --aisle_size >= 0, --min_basket_size >= 1")
 
     root = get_project_root()
     raw_dir = Path(args.raw_dir) if args.raw_dir else root / 'data' / 'raw'
@@ -207,7 +212,8 @@ def main():
         jobs.append(('aisle', args.aisle_size))
 
     for level, n in jobs:
-        df_tx = build_transactions(df_op, df_products, samples[n], level=level)
+        df_tx = build_transactions(df_op, df_products, samples[n], level=level,
+                                   min_basket_size=args.min_basket_size)
         
         # 1. Lưu file .parquet (Tối ưu tốc độ & bộ nhớ cho thuật toán Mining)
         out_parquet_path = out_dir / f"transactions_{level}_{size_tag(n)}.parquet"
