@@ -10,12 +10,20 @@ Dự án môn học **Khai phá dữ liệu (Data Mining)** - Đề tài: So sá
 apriori-vs-fpgrowth-instacart/
 ├── data/
 │   ├── raw/                 # File CSV gốc tải từ Kaggle (được gitignore)
-│   └── processed/           # File .parquet đã lọc/sample/tiền xử lý
+│   └── processed/           # File .csv đã lọc/sample/tiền xử lý
 ├── src/
 │   ├── __init__.py
+<<<<<<< HEAD
 │   ├── preprocess.py        # Tiền xử lý, gom giỏ hàng và lưu parquet
 │   ├── mining.py            # Bọc mlxtend: Apriori, FP-Growth, sinh luật (Confidence, Lift)
 │   └── benchmark.py         # So sánh thời gian chạy và bộ nhớ RAM, mỗi lần chạy một tiến trình riêng
+=======
+│   ├── preprocess.py        # Tiền xử lý, gom giỏ hàng và lưu CSV
+│   ├── my_apriori.py        # Tự cài đặt thuật toán Apriori
+│   ├── my_fpgrowth.py       # Tự cài đặt thuật toán FP-Growth (FP-Tree)
+│   ├── association_rules.py # Trích xuất và đánh giá luật kết hợp (confidence, lift)
+│   └── benchmark.py         # Đo lường thời gian chạy và bộ nhớ RAM
+>>>>>>> 6aad4c1 (new)
 ├── dashboard/
 │   └── app.py               # Streamlit Dashboard demo trực quan tương tác
 ├── notebooks/
