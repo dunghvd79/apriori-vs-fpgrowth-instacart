@@ -14,10 +14,8 @@ apriori-vs-fpgrowth-instacart/
 ├── src/
 │   ├── __init__.py
 │   ├── preprocess.py        # Tiền xử lý, gom giỏ hàng và lưu parquet
-│   ├── my_apriori.py        # Tự cài đặt thuật toán Apriori
-│   ├── my_fpgrowth.py       # Tự cài đặt thuật toán FP-Growth (FP-Tree)
-│   ├── association_rules.py # Trích xuất và đánh giá luật kết hợp (confidence, lift)
-│   └── benchmark.py         # Đo lường thời gian chạy và bộ nhớ RAM
+│   ├── mining.py            # Bọc mlxtend: Apriori, FP-Growth, sinh luật (Confidence, Lift)
+│   └── benchmark.py         # So sánh thời gian chạy và bộ nhớ RAM, mỗi lần chạy một tiến trình riêng
 ├── dashboard/
 │   └── app.py               # Streamlit Dashboard demo trực quan tương tác
 ├── notebooks/
@@ -73,9 +71,17 @@ pip install -r requirements.txt
 
 4. Tiền xử lý và tạo tập dữ liệu mẫu:
    ```bash
-   # Lấy mẫu 50,000 đơn hàng từ tập prior để thử nghiệm
-   python src/preprocess.py --source prior --sample 50000 --min_basket_size 2
+   # Mặc định: mẫu lồng nhau 10k ⊂ 50k ⊂ 100k đơn (mức sản phẩm) + 100k đơn (mức kệ hàng), seed=42
+   python src/preprocess.py
+
+   # Tùy chỉnh
+   python src/preprocess.py --source prior --sizes 10000 50000 100000 --aisle_size 100000 --min_basket_size 2 --seed 42
    ```
+
+   Ghi chú:
+   - Chỉ giữ các đơn có >= 2 món (đơn 1 món không sinh được luật), nên support được tính trên các giỏ hàng có từ 2 món trở lên.
+   - Ở mức kệ hàng, nhãn `missing` (sản phẩm chưa phân loại) bị loại bỏ, và quy tắc >= 2 món được áp lại sau khi gom theo kệ (giỏ chỉ còn 1 kệ bị loại), nên mẫu kệ 100k còn 98.491 giỏ.
+   - Đầu ra trong `data/processed/`: file `.parquet` (dùng cho khai phá) và `.csv` (để xem bằng Excel, các món phân cách bởi ` | `).
 
 ---
 
