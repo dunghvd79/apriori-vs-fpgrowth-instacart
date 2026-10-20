@@ -9,8 +9,8 @@ enableXsrfProtection = false
 
 [theme]
 base = "light"
-primaryColor = "#0D9488"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F8FAFC"
-textColor = "#0F172A"
+primaryColor = "#2F6B42"
+backgroundColor = "#F7F9F4"
+secondaryBackgroundColor = "#EEF2EA"
+textColor = "#1C2B22"
 font = "sans serif"
