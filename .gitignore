@@ -36,3 +36,4 @@ report/*.docx
 .DS_Store
 Thumbs.db
 *.log
+Library/
