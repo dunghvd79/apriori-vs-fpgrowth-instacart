@@ -1,8 +1,9 @@
 
 
+import math
+import time
 from collections import defaultdict
 from itertools import combinations
-import time
 from typing import Dict, FrozenSet, List, Set, Tuple
 import pandas as pd
 
@@ -41,7 +42,7 @@ class OptimizedFPGrowth:
         if self.n_transactions == 0:
             return self
 
-        min_count = max(1, int(self.min_support * self.n_transactions))
+        min_count = max(1, math.ceil(round(self.min_support * self.n_transactions, 9)))
 
         # ======================================================================
         # BƯỚC 1: Quét CSDL lần 1 — Đếm tần suất và lọc các món đạt min_support

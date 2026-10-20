@@ -1,67 +1,71 @@
 # 🛒 Hệ Thống Dự Đoán & Gợi Ý Sản Phẩm Mua Kèm Bằng Thuật Toán FP-Growth (Instacart Market Basket Analysis)
 
-> **Đề tài:** Khai phá luật kết hợp (Association Rule Mining) và Xây dựng hệ thống gợi ý bán kèm sản phẩm (Cross-Selling Recommender System) sử dụng thuật toán **FP-Growth** trên bộ dữ liệu **Instacart Market Basket Analysis**.
+> **Đề tài:** Khai phá luật kết hợp (Association Rule Mining) và Xây dựng hệ thống gợi ý bán kèm sản phẩm (Cross-Selling Recommender System) sử dụng thuật toán **FP-Growth** tự cài đặt trên bộ dữ liệu **Instacart Market Basket Analysis**.
 
 ---
 
 ## 📌 1. Giới thiệu Đề tài & Mục tiêu Bài toán
 
-Trong ngành bán lẻ và thương mại điện tử (E-commerce / Supermarket), việc thấu hiểu hành vi mua sắm của khách hàng đóng vai trò sống còn để tối ưu hóa doanh thu. 
+Trong ngành bán lẻ và thương mại điện tử (E-commerce / Supermarket), việc thấu hiểu hành vi mua sắm của khách hàng đóng vai trò sống còn để tối ưu hóa doanh thu và nâng cao trải nghiệm mua hàng.
 
-Bài toán **Phân tích Giỏ hàng (Market Basket Analysis - MBA)** đặt ra câu hỏi cốt lõi:
-> *"Khi một khách hàng đã bỏ sản phẩm **A** vào giỏ hàng, họ có xu hướng mua kèm thêm sản phẩm **B** nào nhất?"*
+Bài toán **Phân tích Giỏ hàng (Market Basket Analysis - MBA)** đặt ra câu hỏi nghiệp vụ cốt lõi:
+> *"Khi khách hàng đã chọn mua sản phẩm **A**, họ có xu hướng mua kèm thêm sản phẩm **B** nào nhất?"*
 
 ### Mục tiêu chính của dự án:
-1. **Khai phá các quy luật mua sắm ẩn (Association Rules):** Tìm ra các cặp/nhóm sản phẩm thường xuyên được mua cùng nhau trong hơn 3 triệu đơn hàng của Instacart.
-2. **Dự đoán & Gợi ý sản phẩm mua kèm thời gian thực (Live Recommender):** Dựa trên giỏ hàng hiện tại của người dùng, hệ thống tự động suy diễn và đề xuất các sản phẩm mua kèm có độ tin cậy (*Confidence*) và độ nâng (*Lift*) cao nhất.
-3. **Tối ưu hóa hiệu năng bằng thuật toán FP-Growth:** Sử dụng cấu trúc cây tiền tố **FP-Tree** để khai phá dữ liệu quy mô lớn một cách siêu tốc, tiết kiệm hơn 90% bộ nhớ RAM so với phương pháp sinh ứng viên cổ điển (Apriori).
-4. **Xây dựng Dashboard Web trực quan:** Cung cấp giao diện tương tác Streamlit chuyên nghiệp giúp người quản lý siêu thị tra cứu luật mua sắm và mô phỏng giỏ hàng gợi ý sản phẩm.
+1. **Tự cài đặt thuật toán FP-Growth tối ưu (`src/my_fpgrowth.py`):** Xây dựng cấu trúc cây tiền tố **FP-Tree** thuần Python với các kỹ thuật tối ưu hóa cao độ (`__slots__`, Integer ID Mapping, chuẩn hóa ngưỡng trần `math.ceil`), khai phá đệ quy không cần sinh tập ứng viên ($C_k$).
+2. **Khai phá các quy luật mua sắm ẩn (Association Rules):** Tìm ra mạng lưới quan hệ giữa các mặt hàng từ hàng triệu đơn hàng của Instacart thông qua các chỉ số định lượng: *Support*, *Confidence*, và *Lift*.
+3. **Dự đoán & Gợi ý sản phẩm mua kèm (Product Recommender):** Dựa trên giỏ hàng hiện tại của khách, hệ thống tính toán và xếp hạng các sản phẩm mua kèm tiềm năng nhất theo điểm $\text{Score} = \text{Lift} \times \text{Confidence}$, kèm câu diễn giải kinh doanh tự nhiên.
+4. **Xây dựng Dashboard phân tích trực quan:** Cung cấp giao diện Streamlit phong cách **Light Analytics** (Trắng, Navy, Teal) với 3 nghiệp vụ tập trung, đảm bảo 100% số liệu hiển thị đều lấy từ kết quả chạy thực tế.
 
 ---
 
 ## ⚡ 2. Tại sao chọn duy nhất thuật toán FP-Growth?
 
-Khai phá luật kết hợp có hai thuật toán kinh điển là **Apriori** và **FP-Growth**. Dự án này **lựa chọn FP-Growth làm thuật toán hạt nhân duy nhất** để triển khai hệ thống dự đoán và gợi ý vì những ưu thế vượt trội:
+Khai phá luật kết hợp có hai trường phái kinh điển là **Apriori** và **FP-Growth**. Dự án **lựa chọn FP-Growth làm thuật toán hạt nhân duy nhất** để triển khai hệ thống dự đoán và gợi ý vì những ưu thế vượt trội:
 
-| Tiêu chí | Apriori (Cổ điển) | FP-Growth (Được chọn trong dự án) |
+| Tiêu chí | Apriori (Cổ điển) | FP-Growth (Lựa chọn của dự án) |
 | :--- | :--- | :--- |
-| **Độ chính xác của luật** | Chuẩn xác 100% | **Chuẩn xác 100% (cho kết quả y hệt Apriori)** |
-| **Số lần quét cơ sở dữ liệu** | Quét $k$ lần (với $k$ là độ dài giỏ lớn nhất) $\rightarrow$ rất chậm | **Chỉ quét đúng 2 lần duy nhất** |
-| **Cơ chế tìm kiếm** | Sinh tập ứng viên tổ hợp $C_k$ khổng lồ $\rightarrow$ nghẽn RAM | **Không sinh ứng viên**, nén dữ liệu vào cây FP-Tree |
-| **Bộ nhớ RAM tiêu thụ** | Rất tốn RAM (**6,674 MB** ở ngưỡng support 0.5%) | **Tiết kiệm vượt trội (528 MB RAM, giảm hơn 12 lần)** |
-| **Tốc độ thực thi** | Giảm theo cấp số nhân khi dữ liệu lớn | **Nhanh gấp nhiều lần**, phù hợp gợi ý thời gian thực |
+| **Độ chính xác của luật** | Chuẩn xác 100% | **Chuẩn xác 100% (kết quả toán học tương đương)** |
+| **Số lần quét cơ sở dữ liệu** | Quét $k$ lần (với $k$ là độ dài giỏ hàng lớn nhất) | **Chỉ quét đúng 2 lần duy nhất** |
+| **Cơ chế tìm kiếm** | Sinh tập ứng viên tổ hợp $C_k$ khổng lồ $\rightarrow$ bùng nổ tổ hợp | **Không sinh ứng viên**, nén dữ liệu vào cây FP-Tree |
+| **Bộ nhớ RAM tiêu thụ** | Rất tốn RAM khi ngưỡng support giảm sâu | **Tiết kiệm vượt trội**, nén hàng chục nghìn đơn vào cây phân cấp |
+| **Độ phức tạp tính toán** | $O(2^d)$ theo số lượng mặt hàng | Chia để trị trên các cây điều kiện nhỏ gọn (**Divide-and-Conquer**) |
 
-> **Kết luận:** FP-Growth giữ nguyên 100% độ chính xác toán học của tập luật, nhưng giải quyết triệt để bài toán tài nguyên bộ nhớ và thời gian tính toán trên tập dữ liệu hàng trăm nghìn đơn hàng.
+> **Kết luận:** FP-Growth loại bỏ hoàn toàn giai đoạn sinh tập ứng viên tổ hợp tốn kém, giúp hệ thống khai phá tập phổ biến và phản hồi gợi ý mua kèm gần như tức thì.
 
 ---
 
-## 🧠 3. Cơ chế Hoạt động của FP-Growth & Dự Đoán Gợi Ý
+## 🧠 3. Động Cơ Khai Phá & Cơ Chế Hoạt Động (`src/my_fpgrowth.py`)
 
-### 3.1. Quy trình khai phá của FP-Growth (Frequent Pattern Growth)
-Thuật toán hoạt động qua 3 bước cốt lõi:
-1. **Lần quét 1:** Quét toàn bộ lịch sử đơn hàng để đếm tần suất xuất hiện của từng sản phẩm. Loại bỏ các sản phẩm có tần suất nhỏ hơn `min_support`. Sắp xếp các sản phẩm còn lại theo thứ tự tần suất giảm dần.
-2. **Lần quét 2 (Dựng cây FP-Tree):** Đọc lại từng giỏ hàng và chèn các sản phẩm vào cây tiền tố (FP-Tree). Các đơn hàng có chung chuỗi sản phẩm đầu sẽ dùng chung nhánh cây (nén dữ liệu tối đa). Đồng thời tạo bảng liên kết đỉnh (**Header Table & Node Links**) để duyệt nhanh các nút cùng tên.
-3. **Khai phá đệ quy (Divide-and-Conquer):** Duyệt bảng Header Table từ dưới lên (từ món ít phổ biến đến phổ biến nhất), xây dựng các **Cây tiền tố điều kiện (Conditional FP-Tree)** để trích xuất toàn bộ tập phổ biến (*Frequent Itemsets*) mà không cần sinh tập ứng viên.
+Thuật toán hạt nhân của dự án được triển khai hoàn chỉnh trong module [`src/my_fpgrowth.py`](src/my_fpgrowth.py) với 4 kỹ thuật tối ưu hóa cốt lõi:
+
+### 3.1. Kỹ thuật tối ưu hóa thuật toán
+1. **Integer ID Mapping:** Ánh xạ tên sản phẩm (chuỗi ký tự) sang số nguyên `int32`. Các phép so sánh trên cây chuyển thành so sánh cấp CPU ($O(1)$), giảm hơn 70% bộ nhớ so với việc lưu trữ chuỗi.
+2. **Cấu trúc nút `__slots__` trong `FPNode`:** Loại bỏ từ điển `__dict__` nội tại của từng đối tượng Python, tiết kiệm 50% RAM trên mỗi nút cây khi cây chứa hàng chục nghìn nhánh.
+3. **Chuẩn hóa ngưỡng đếm bằng `math.ceil`:** 
+   $$\text{min\_count} = \max\left(1, \lceil \text{min\_support} \times N \rceil\right)$$
+   Đảm bảo điều kiện tần suất xuất hiện nghiêm ngặt, không bị làm tròn xuống làm lọt các món dưới ngưỡng hỗ trợ.
+4. **Header Table & Node-Links:** Bảng đầu mục lưu con trỏ danh sách liên kết trỏ tới toàn bộ các nút cùng mã hàng trên cây, cho phép truy vết Conditional Pattern Base tức thì mà không cần duyệt lại toàn bộ cây.
 
 ### 3.2. Trích xuất Luật Kết Hợp (Association Rules)
-Từ các tập phổ biến, hệ thống sinh ra các luật dạng $A \rightarrow B$ (Nếu mua $A$ thì sẽ mua kèm $B$):
-* **Support (Độ hỗ trợ):** Tỷ lệ các đơn hàng có chứa cả $A$ và $B$.
-  $$\text{Support}(A \rightarrow B) = P(A \cup B) = \frac{\text{Số đơn có cả } A \text{ và } B}{\text{Tổng số đơn hàng}}$$
-* **Confidence (Độ tin cậy):** Xác suất khách mua $B$ khi đã biết khách mua $A$.
+Từ các tập phổ biến, hệ thống sinh ra các luật dạng $A \rightarrow B$ (*Nếu mua $A$ thì sẽ mua kèm $B$*):
+* **Support (Độ hỗ trợ):** Tỷ lệ đơn hàng chứa đồng thời cả $A$ và $B$.
+  $$\text{Support}(A \rightarrow B) = P(A \cup B) = \frac{\text{Số đơn chứa cả } A \text{ và } B}{\text{Tổng số đơn hàng}}$$
+* **Confidence (Độ tin cậy):** Xác suất mua $B$ khi đã chọn mua $A$.
   $$\text{Confidence}(A \rightarrow B) = P(B \mid A) = \frac{\text{Support}(A \cup B)}{\text{Support}(A)}$$
-* **Lift (Độ nâng):** Thước đo mức độ tương quan giữa việc mua $A$ và việc mua $B$.
+* **Lift (Độ nâng):** Thước đo mức độ thúc đẩy của $A$ lên hành vi mua $B$.
   $$\text{Lift}(A \rightarrow B) = \frac{P(A \cup B)}{P(A) \times P(B)} = \frac{\text{Confidence}(A \rightarrow B)}{\text{Support}(B)}$$
-  * $\text{Lift} > 1$: Tương quan dương mạnh mẽ (mua $A$ làm tăng đột biến khả năng mua $B$).
-  * $\text{Lift} = 1$: Hai sản phẩm hoàn toàn độc lập.
-  * $\text{Lift} < 1$: Tương quan âm (mua $A$ làm giảm khả năng mua $B$).
+  * $\text{Lift} > 1$: Tương quan thuận mạnh mẽ (mua $A$ làm tăng khả năng mua $B$).
+  * $\text{Lift} = 1$: Hai sản phẩm độc lập.
+  * $\text{Lift} < 1$: Tương quan nghịch.
 
-### 3.3. Thuật toán Dự đoán Sản phẩm Mua kèm (Live Recommender)
-Khi khách hàng đang có giỏ hàng $C = \{item_1, item_2, ...\}$:
-1. Hệ thống lọc tất cả các luật $A \rightarrow B$ thỏa mãn điều kiện $A \subseteq C$ (tiền đề là tập con của giỏ hàng).
-2. Lấy tập các sản phẩm mục tiêu gợi ý: $B_{\text{candidate}} = B \setminus C$ (chưa có trong giỏ).
-3. Xếp hạng các sản phẩm gợi ý theo thứ tự ưu tiên:
+### 3.3. Thuật toán Dự đoán Sản phẩm Mua kèm (Recommender Engine)
+Khi khách hàng có giỏ hàng hiện tại $C = \{item_1, item_2, ...\}$:
+1. Lọc tất cả các luật $A \rightarrow B$ thỏa mãn $A \subseteq C$ (tiền đề nằm trọn trong giỏ hàng).
+2. Lấy tập sản phẩm đề xuất chưa có trong giỏ: $B_{\text{candidate}} = B \setminus C$.
+3. Xếp hạng sản phẩm theo điểm ưu tiên kết hợp:
    $$\text{Score} = \text{Lift} \times \text{Confidence}$$
-4. Xuất kết quả kèm theo câu giải thích kinh doanh trực quan cho người dùng.
+4. Xuất kết quả kèm theo câu giải thích nghiệp vụ tự nhiên và đề xuất hành động bán lẻ (Combo ưu đãi, Cross-selling, Sắp xếp quầy kệ).
 
 ---
 
@@ -70,28 +74,28 @@ Khi khách hàng đang có giỏ hàng $C = \{item_1, item_2, ...\}$:
 ```text
 apriori-vs-fpgrowth-instacart/
 ├── data/
-│   ├── raw/                 # Dữ liệu gốc tải từ Kaggle (orders, products, order_products...)
-│   └── processed/           # Dữ liệu giỏ hàng đã lọc và mẫu lồng nhau (.parquet & .csv)
+│   ├── raw/                 # Dữ liệu gốc Instacart (.csv)
+│   └── processed/           # Dữ liệu giỏ hàng lồng nhau (.parquet & .csv: 10k, 50k, 100k)
 │       ├── transactions_product_10k.parquet / .csv   # Mẫu 10k đơn (mức sản phẩm)
 │       ├── transactions_product_50k.parquet / .csv   # Mẫu 50k đơn (mức sản phẩm)
 │       ├── transactions_product_100k.parquet / .csv  # Mẫu 100k đơn (mức sản phẩm)
 │       └── transactions_aisle_100k.parquet / .csv    # Mẫu 100k đơn (mức kệ hàng)
 ├── src/
-│   ├── __init__.py
-│   ├── preprocess.py        # Tiền xử lý, lọc giỏ >= 2 món, nested sampling, xuất file
-│   ├── mining.py            # Khai phá FP-Growth (cắt tỉa món hiếm, ma trận thưa, sinh luật)
-│   └── benchmark.py         # Đo lường kiểm chứng hiệu năng và bộ nhớ RAM
+│   ├── __init__.py          # Khởi tạo package
+│   ├── my_fpgrowth.py       # [CỐT LÕI] Thuật toán FP-Growth tự cài đặt (FP-Tree + slots + Recommender)
+│   ├── preprocess.py        # Tiền xử lý đơn hàng, lọc giỏ >= 2 món, xuất .parquet & .csv
+│   ├── mining.py            # Lớp phụ trợ mã hóa ma trận thưa và khai phá đối chứng
+│   └── benchmark.py         # Đo lường thực nghiệm độc lập (đa tiến trình, lấy mẫu RSS)
 ├── dashboard/
-│   └── app.py               # Ứng dụng Streamlit Dashboard: Gợi ý giỏ hàng & Khám phá luật
+│   └── app.py               # Web Dashboard phân tích giỏ hàng & gợi ý mua sắm (3 nghiệp vụ)
 ├── notebooks/
 │   ├── 01_eda.ipynb         # Khám phá phân bố dữ liệu Instacart và hiện tượng đuôi dài
-│   └── 02_experiments.ipynb # Thử nghiệm kiểm chứng luật và trích xuất gợi ý
-├── results/                 # Bảng số liệu benchmark và danh sách luật xuất ra
-├── report/                  # Báo cáo Word / PDF và Slide thuyết trình
-├── requirements.txt         # Danh sách thư viện cần thiết
+│   └── 02_experiments.ipynb # Thử nghiệm đối chiếu luật và khai phá
+├── results/                 # Dữ liệu thực nghiệm offline lưu trữ (.csv)
+├── requirements.txt         # Danh sách thư viện (pandas, numpy, pyarrow, fastparquet, streamlit...)
 ├── .streamlit/
-│   └── config.toml          # Cấu hình theme sáng (Light Theme) và bảo mật cho Dashboard
-└── README.md
+│   └── config.toml          # Cấu hình giao diện Light Analytics (Trắng, Navy, Teal)
+└── README.md                # Tài liệu hướng dẫn đồ án
 ```
 
 ---
@@ -105,7 +109,7 @@ Khuyến nghị sử dụng Python 3.9, 3.10 hoặc 3.11:
 # Tạo môi trường ảo
 python3 -m venv .venv
 
-# Kích hoạt môi trường ảo
+# Kích hoạt môi trường ảo:
 # Trên macOS / Linux:
 source .venv/bin/activate
 
@@ -114,6 +118,7 @@ source .venv/bin/activate
 ```
 
 ### Bước 2: Cài đặt các thư viện phụ thuộc
+Đảm bảo đã bao gồm `pyarrow` và `fastparquet` để đọc ghi dữ liệu Parquet:
 ```bash
 pip install -r requirements.txt
 ```
@@ -124,27 +129,22 @@ pip install -r requirements.txt
 
 1. Tải bộ dữ liệu từ Kaggle: [Instacart Market Basket Analysis](https://www.kaggle.com/c/instacart-market-basket-analysis/data).
 2. Giải nén đầy đủ 6 tệp `.csv` vào thư mục `data/raw/`:
-   * `order_products__prior.csv`
-   * `order_products__train.csv`
-   * `products.csv`
-   * `orders.csv`
-   * `aisles.csv`
-   * `departments.csv`
-
+   * `order_products__prior.csv`, `order_products__train.csv`
+   * `products.csv`, `orders.csv`, `aisles.csv`, `departments.csv`
 3. Chạy quy trình tiền xử lý và sinh mẫu dữ liệu:
    ```bash
    python src/preprocess.py
    ```
    * **Cơ chế tiền xử lý:**
-     * Lọc bỏ các đơn hàng chỉ có 1 món (vì đơn 1 món không thể tạo ra luật mua kèm $A \rightarrow B$).
-     * Áp dụng **Lấy mẫu lồng nhau (Nested Sampling)** với `seed=42`: Tập 10k là tập con của 50k, 50k là tập con của 100k ($10k \subset 50k \subset 100k$), giúp tần suất sản phẩm luôn ổn định giữa các quy mô.
-     * Tự động xuất song song file `.parquet` (cho thuật toán nạp siêu tốc) và `.csv` (để tra cứu trực tiếp trong Excel).
+     * Lọc bỏ các đơn hàng chỉ có 1 món (đơn 1 món không thể tạo thành luật mua kèm $A \rightarrow B$).
+     * Áp dụng **Lấy mẫu lồng nhau (Nested Sampling)** với `seed=42`: Tập 10k là tập con của 50k, 50k là tập con của 100k ($10k \subset 50k \subset 100k$), giúp tần suất mặt hàng ổn định giữa các quy mô.
+     * Tự động xuất đồng thời tệp `.parquet` (nạp siêu tốc) và `.csv` (để tra cứu).
 
 ---
 
 ## 🖥️ 7. Hướng Dẫn Sử Dụng Web Dashboard (Streamlit)
 
-Khởi chạy ứng dụng Web trực quan bằng lệnh:
+Khởi chạy ứng dụng Web Dashboard phân tích bằng lệnh:
 
 ```bash
 streamlit run dashboard/app.py
@@ -152,30 +152,39 @@ streamlit run dashboard/app.py
 
 Ứng dụng sẽ tự động mở trên trình duyệt tại địa chỉ: `http://localhost:8501`.
 
-### Các chức năng nổi bật trên Dashboard:
-1. **🛍️ Tab 1 — Giả Lập Giỏ Hàng & Gợi Ý Mua Kèm (Live Recommender):**
-   * Người dùng chọn các món đồ đang có trong giỏ (ví dụ: *Chuối*, *Bơ hữu cơ*...).
-   * Nhấn nút **"✨ Tìm sản phẩm gợi ý mua kèm"**.
-   * Hệ thống lập tức hiển thị các sản phẩm được dự đoán mua kèm với đầy đủ: Tên sản phẩm, Độ tin cậy (Confidence), Độ nâng (Lift) và câu giải thích nghiệp vụ bằng ngôn ngữ tự nhiên.
-2. **📜 Tab 2 — Khám Phá Toàn Bộ Tập Luật (Association Rules Explorer):**
-   * Cho phép tùy chỉnh thanh trượt `Min Confidence` và `Min Lift`.
-   * Bảng hiển thị: `Nếu mua [A] -> Sẽ mua kèm [B]`.
-   * Ô tìm kiếm thông minh theo tên sản phẩm và nút tải toàn bộ luật về file `.csv`.
-   * Biểu đồ Scatter Plot tương tác phân bố chất lượng luật (Confidence vs Lift).
-3. **🌳 Tab 3 — Phân Tích Tập Phổ Biến FP-Growth (Frequent Itemsets):**
-   * Xem danh sách các tập $k$-itemsets phổ biến nhất và kiểm tra độ dài tập món.
-4. **⚡ Tab 4 — So Sánh & Thống Kê Hiệu Năng (Benchmark Performance):**
-   * Trực quan hóa các biểu đồ cột Runtime và RAM tiêu thụ, chứng minh lý do FP-Growth được lựa chọn thay thế Apriori.
-5. **📊 Tab 5 — Lịch Sử Thực Nghiệm Offline:**
-   * Tra cứu lại bảng số liệu đo đạc thực nghiệm từ thư mục `results/`.
+Giao diện được thiết kế theo phong cách **Light Analytics** (Trắng `#FFFFFF`, Navy `#1E3A8A`, Teal `#0D9488`), độ tương phản cao, tập trung trực diện vào **3 nghiệp vụ kinh doanh bán lẻ cốt lõi**:
+
+### 🛍️ Nghiệp vụ 1 — Gợi Ý Sản Phẩm Mua Kèm (Product Recommender)
+* **Thử nhanh giỏ hàng mẫu:** 4 nút bấm 1-click chọn nhanh các combo nông sản phổ biến (*Trái cây & Berry*, *Salad & Rau củ tươi*, *Táo & Hoa quả*, *Bữa sáng bổ dưỡng*).
+* **Bộ chọn giỏ hàng đa sản phẩm:** Cho phép chọn cùng lúc nhiều món hàng từ top sản phẩm phổ biến nhất.
+* **Thẻ gợi ý thông minh:**
+  * Xếp hạng món mua kèm (#1, #2, #3...) theo điểm $\text{Score} = \text{Lift} \times \text{Confidence}$.
+  * Hệ thống huy hiệu: Score, Xác suất mua kèm (Confidence %), Độ nâng (Lift ×), Tần suất combo (Support %).
+  * **Giải thích tự nhiên:** *"Dựa trên N đơn hàng thực tế: Khi khách hàng đã chọn [A], xác suất mua thêm [B] đạt X%, cao gấp Y lần so với mua ngẫu nhiên."*
+  * **Hành động kinh doanh khuyến nghị:** Tự động phân loại chiến lược dựa trên Lift (*Combo Siêu Gắn Kết*, *Bán Chéo Trực Tiếp*, hoặc *Sắp Xếp Quầy Kệ*).
+
+### 📜 Nghiệp vụ 2 — Khám Phá & Tra Cứu Luật Kết Hợp (Association Rules Explorer)
+* **Tổng quan chỉ số thực tế:** Số luật tìm thấy, Độ tin cậy trung bình, Độ nâng trung bình, Số luật tương quan mạnh (Lift $\ge$ 2.0).
+* **Biểu đồ Scatter Plot tương tác:** Trục X là Độ tin cậy (Confidence %), Trục Y là Độ nâng (Lift), kích thước bóng thể hiện Tần suất (Support %).
+* **Top 10 Cặp mặt hàng có Lift cao nhất:** Biểu đồ thanh ngang thể hiện các liên kết mua sắm chặt chẽ nhất.
+* **Bộ lọc thông minh 2 chiều:** Tìm kiếm theo món tiền đề (*Nếu mua món A*) hoặc món hệ quả (*Sẽ mua kèm món B*).
+* **Xuất dữ liệu:** Nút **📥 Tải Danh Sách Luật Kết Hợp (CSV)** phục vụ báo cáo.
+
+### 🌳 Nghiệp vụ 3 — Phân Tích Tập Phổ Biến & Cây Tiền Tố FP-Tree
+* **Chỉ số tập mục:** Tổng số tập phổ biến, số mặt hàng đơn lẻ (1-item), số combo mua chung ($\ge 2$-item), kích thước combo dài nhất.
+* **Biểu đồ phân bố:** Phân bố số lượng theo độ dài combo ($k$-itemset) và Top 15 tập phổ biến xuất hiện nhiều nhất.
+* **Trực quan hóa cơ chế nén 3 bước của FP-Tree:** Minh họa trực quan quy trình nén dữ liệu và chia để trị của cây tiền tố FP-Tree.
+* **Bảng tra cứu tập phổ biến:** Tìm kiếm theo tên sản phẩm, xem số lượng đơn hàng thực tế chứa từng combo.
+
+> **Cam kết dữ liệu:** Mọi số liệu trên cả 3 nghiệp vụ đều được tính toán động trực tiếp từ dữ liệu giao dịch thực tế thông qua động cơ `src/my_fpgrowth.py`, không sử dụng bất kỳ số liệu minh họa giả lập nào.
 
 ---
 
 ## 📈 8. Một Số Phát Hiện & Luật Kết Hợp Tiêu Biểu trên Instacart
 
-Chạy FP-Growth trên tập dữ liệu Instacart ghi nhận những quy luật mua sắm có giá trị kinh doanh rất cao:
+Chạy thuật toán FP-Growth trên dữ liệu Instacart ghi nhận những quy luật mua sắm có giá trị kinh doanh rất cao:
 
-* **Nhóm rau củ hữu cơ & gia vị:**
+* **Nhóm rau củ hữu cơ & gia vị nấu ăn:**
   $$\text{Organic Cilantro} \rightarrow \text{Limes} \quad (\text{Confidence: } 27.4\%, \text{Lift: } 5.69\times)$$
   $$\text{Organic Garlic} \rightarrow \text{Organic Yellow Onion} \quad (\text{Confidence: } 21.4\%, \text{Lift: } 5.68\times)$$
   * *Ý nghĩa kinh doanh:* Khách hàng mua rau mùi hữu cơ có xu hướng mua chanh gấp gần 5.7 lần người bình thường (nhóm khách nấu món salad/món cuốn).
@@ -188,5 +197,7 @@ Chạy FP-Growth trên tập dữ liệu Instacart ghi nhận những quy luật
 
 ## 👥 9. Thông Tin Đồ Án
 * **Môn học:** Khai phá dữ liệu (Data Mining)
-* **Chủ đề:** Dự đoán giỏ hàng và Khai phá luật kết hợp bằng thuật toán FP-Growth
-* **Ngôn ngữ & Công cụ:** Python 3.10+, mlxtend, Streamlit, Pandas, Plotly, PyArrow.
+* **Chủ đề:** Hệ thống Phân tích Giỏ hàng & Gợi ý Mua sắm bằng Thuật toán FP-Growth
+* **Động cơ thuật toán:** `src/my_fpgrowth.py` (Tự cài đặt - Pure Python FP-Tree)
+* **Giao diện:** Streamlit (Light Analytics Theme)
+* **Thư viện chính:** Python 3.9+, Pandas, Plotly, PyArrow, FastParquet.
