@@ -1,11 +1,10 @@
 """
 Dashboard: Gợi ý sản phẩm mua kèm trên Instacart bằng FP-Growth tự cài đặt (src/my_fpgrowth.py).
 
-Bốn khu vực chức năng chính:
+Ba khu vực chức năng chính:
   1. Gợi ý mua kèm (Recommender) — Chọn giỏ hàng, nhận gợi ý thời gian thực (luật kết hợp + dự phòng món bán chạy).
   2. Luật kết hợp (Rules Explorer) — Biểu đồ phân bố, 10 cặp món gắn kết nhất (đã gộp hai chiều A→B và B→A), tra cứu và tải CSV.
   3. Tập phổ biến (Frequent Itemsets) — Phân bố độ dài k-itemset, danh sách combo phổ biến nhất, tra cứu chi tiết.
-  4. Đánh giá (Holdout Evaluation) — Kiểm thử 80/20: giấu 1 món mỗi đơn kiểm tra, đo tỉ lệ đoán trúng (Hit@k) của hệ thống.
 
 Mọi số liệu đều được tính toán trực tiếp từ dữ liệu trong data/processed/. Các ngưỡng do người dùng tùy chỉnh ở thanh bên.
 """
@@ -248,66 +247,6 @@ def recommend_with_fallback(cart: List[str], rules_df: pd.DataFrame, popular: Li
     return recs
 
 
-def split_holdout(txs: List[List[str]], test_ratio: float = 0.2):
-    """
-    Mục đích: Phục vụ Tab 4 (Đánh giá Holdout kiểm thử khách quan).
-    - Chia ngẫu nhiên tập dữ liệu thành 80% Train và 20% Test với SEED=42 cố định.
-    - Trong mỗi đơn hàng kiểm tra (Test basket), giấu ngẫu nhiên 1 món (hidden item) đi,
-      giữ phần còn lại làm giỏ hàng để đưa vào mô hình dự đoán.
-    """
-    rng = random.Random(SEED)
-    idx = list(range(len(txs)))
-    rng.shuffle(idx)
-    n_test = int(len(idx) * test_ratio)
-    train = [txs[i] for i in idx[n_test:]]
-    tests = []
-    for i in idx[:n_test]:
-        basket = list(txs[i])
-        hidden = basket.pop(rng.randrange(len(basket)))
-        tests.append((basket, hidden))
-    return train, tests
-
-
-@st.cache_data(show_spinner=False)
-def evaluate(file_path: str, max_rows: int, min_support: float, min_conf: float, min_lift: float, k: int):
-    """
-    Mục đích: Đánh giá định lượng khả năng dự đoán chính xác của hệ thống trên tập kiểm tra độc lập.
-    So sánh trực diện 3 phương pháp gợi ý:
-      1. Chỉ dùng luật kết hợp (Rule-only).
-      2. Chỉ dùng món bán chạy nhất (Popular-only — mốc cơ sở Baseline).
-      3. Kết hợp Luật + Dự phòng bán chạy (Hybrid).
-    
-    Các chỉ số đo lường:
-      - Coverage: Tỷ lệ đơn hàng nhận được ít nhất 1 gợi ý.
-      - Hit@k: Tỷ lệ đoán trúng món bị giấu nằm trong top k sản phẩm đề xuất.
-      - Precision on covered: Tỷ lệ đoán trúng tính riêng trên những đơn có đưa ra gợi ý.
-    """
-    txs = load_transactions(file_path, max_rows)
-    train, tests = split_holdout(txs)
-    fi = OptimizedFPGrowth(min_support=min_support).fit(train).get_frequent_itemsets()
-    rules = generate_rules(fi, min_confidence=min_conf, min_lift=min_lift)
-    popular = popular_ranking(train).index.tolist()
-
-    stats = {"rule": [0, 0], "popular": [0, 0], "hybrid": [0, 0]}  # [số đơn có gợi ý, số đơn đoán trúng]
-    for cart, hidden in tests:
-        rule_items = [r["item"] for r in recommend_products(cart, rules, top_n=k)]
-        cart_set = set(cart)
-        pop_items = [p for p in popular[: k + len(cart)] if p not in cart_set][:k]
-        hybrid_items = rule_items + [p for p in pop_items if p not in rule_items][: k - len(rule_items)]
-        for name, items in (("rule", rule_items), ("popular", pop_items), ("hybrid", hybrid_items)):
-            stats[name][0] += bool(items)
-            stats[name][1] += hidden in items
-    n = len(tests)
-    rows = [
-        {"method": "Chỉ luật kết hợp", "key": "rule"},
-        {"method": "Chỉ món bán chạy", "key": "popular"},
-        {"method": "Luật + dự phòng bán chạy", "key": "hybrid"},
-    ]
-    for r in rows:
-        covered, hit = stats[r["key"]]
-        r.update(coverage=covered / n, hit=hit / n, precision_on_covered=hit / covered if covered else 0.0)
-    return pd.DataFrame(rows), len(train), n, len(rules)
-
 
 def dedupe_pairs(rules_df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -416,8 +355,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Khởi tạo 4 Tab chức năng
-tab_rec, tab_rules, tab_fi, tab_eval = st.tabs(["Gợi ý mua kèm", "Luật kết hợp", "Tập phổ biến", "Đánh giá"])
+# Khởi tạo 3 Tab chức năng
+tab_rec, tab_rules, tab_fi = st.tabs(["Gợi ý mua kèm", "Luật kết hợp", "Tập phổ biến"])
 
 
 # ==============================================================================
@@ -653,54 +592,3 @@ with tab_fi:
         if q:
             fi_table = fi_table[fi_table["Tập món"].str.contains(q, case=False, regex=False)]
         st.dataframe(fi_table, width="stretch", hide_index=True, height=360)
-
-
-# ==============================================================================
-# 10. TAB 4: ĐÁNH GIÁ HOLDOUT (EVALUATION ON TEST SET)
-# ==============================================================================
-with tab_eval:
-    st.markdown(
-        "Gợi ý chỉ có ích nếu đoán đúng món khách sẽ mua. Cách kiểm tra: chia ngẫu nhiên các đơn thành "
-        "80% để khai phá luật và 20% để kiểm tra (seed cố định 42). Mỗi đơn kiểm tra bị giấu đi 1 món, "
-        "rồi đo xem món đó có nằm trong k gợi ý không."
-    )
-    k_eval = st.select_slider("Số gợi ý được tính (k)", options=[1, 3, 5, 10], value=5)
-    if st.button("Chạy đánh giá với ngưỡng hiện tại", type="primary"):
-        st.session_state["eval_key"] = (str(selected_file), max_rows, min_support, min_conf, min_lift, k_eval)
-
-    key = st.session_state.get("eval_key")
-    if key is None:
-        st.caption("Bấm nút để chạy. Với 10.000 đơn, việc này mất vài giây.")
-    else:
-        if key != (str(selected_file), max_rows, min_support, min_conf, min_lift, k_eval):
-            st.caption("Ngưỡng đã thay đổi sau lần chạy trước. Bấm nút để chạy lại.")
-        with st.spinner("Đang khai phá trên phần huấn luyện và kiểm tra…"):
-            res, n_train, n_test, n_rules = evaluate(*key)
-        k = key[-1]
-        st.markdown(
-            f"Khai phá trên **{n_train:,}** đơn ra **{n_rules:,}** luật, kiểm tra trên **{n_test:,}** đơn, k = {k}."
-        )
-        
-        # Biểu đồ so sánh Độ phủ (Coverage) và Tỷ lệ đoán trúng (Hit@k) giữa 3 phương pháp
-        long = res.melt(id_vars="method", value_vars=["coverage", "hit"], var_name="metric", value_name="v")
-        long["metric"] = long["metric"].map({"coverage": "Đơn nhận được gợi ý", "hit": f"Đoán trúng món bị giấu (top {k})"})
-        fig = px.bar(long, x="v", y="method", color="metric", barmode="group", orientation="h", text="v",
-                     color_discrete_sequence=[RULE, KALE])
-        fig.update_traces(texttemplate="%{x:.1%}", textposition="outside", cliponaxis=False)
-        fig.update_layout(showlegend=True, legend=dict(orientation="h", y=1.12, x=0, title=None),
-                          yaxis=dict(autorange="reversed"))
-        st.plotly_chart(style_fig(fig, "", "", height=300).update_layout(showlegend=True, margin=dict(t=40)),
-                        width="stretch")
-        
-        # Bảng số liệu chi tiết
-        st.dataframe(
-            res.drop(columns="key").rename(columns={
-                "method": "Cách gợi ý", "coverage": "Đơn nhận được gợi ý",
-                "hit": f"Hit@{k}", "precision_on_covered": f"Hit@{k} trên các đơn có gợi ý",
-            }).style.format({"Đơn nhận được gợi ý": "{:.1%}", f"Hit@{k}": "{:.2%}", f"Hit@{k} trên các đơn có gợi ý": "{:.2%}"}),
-            width="stretch", hide_index=True,
-        )
-        st.caption(
-            "Hit@k = tỉ lệ đơn kiểm tra có món bị giấu nằm trong k gợi ý. "
-            "Món bán chạy là mốc so sánh tối thiểu: cách gợi ý nào cũng nên vượt được mốc này."
-        )
