@@ -494,7 +494,7 @@ with tab_rules:
                 labels={"conf_pct": "Confidence (%)", "lift": "Lift", "supp_pct": "Support (%)"},
             )
             fig.update_traces(marker=dict(color=KALE, opacity=0.65, line=dict(color="#FFFFFF", width=1)))
-            st.plotly_chart(style_fig(fig, "Confidence (%)", "Lift"), width="stretch")
+            st.plotly_chart(style_fig(fig, "Confidence (%)", "Lift"), config={"displayModeBar": False}, use_container_width=True)
             st.caption("Kích thước điểm là support: luật càng to càng xuất hiện nhiều.")
         
         # Biểu đồ Bar Chart: 10 cặp món có độ gắn kết (Lift) cao nhất
@@ -506,7 +506,7 @@ with tab_rules:
             fig.update_traces(marker_color=CARROT, texttemplate="×%{x:.2f}", textposition="inside",
                               insidetextanchor="end", textfont=dict(color="#FFFFFF"))
             fig.update_layout(yaxis=dict(autorange="reversed"))
-            st.plotly_chart(style_fig(fig, "Lift", ""), width="stretch")
+            st.plotly_chart(style_fig(fig, "Lift", ""), config={"displayModeBar": False}, use_container_width=True)
 
         # Bảng tra cứu luật 2 chiều và xuất file CSV
         st.markdown("##### Tra cứu luật")
@@ -553,7 +553,7 @@ with tab_fi:
             fig = px.bar(dist, x="k", y="n", text="n")
             fig.update_traces(marker_color=KALE, textposition="outside", cliponaxis=False)
             fig.update_xaxes(dtick=1)
-            st.plotly_chart(style_fig(fig, "Số món trong tập (k)", "Số tập"), width="stretch")
+            st.plotly_chart(style_fig(fig, "Số món trong tập (k)", "Số tập"), config={"displayModeBar": False}, use_container_width=True)
         
         # Biểu đồ Top các combo xuất hiện nhiều nhất trong siêu thị
         with c2:
@@ -567,7 +567,7 @@ with tab_fi:
                 fig.update_traces(marker_color=BEET, texttemplate="%{text:,} đơn", textposition="inside",
                                   insidetextanchor="end", textfont=dict(color="#FFFFFF"))
                 fig.update_layout(yaxis=dict(autorange="reversed"))
-                st.plotly_chart(style_fig(fig, "Support (%)", ""), width="stretch")
+                st.plotly_chart(style_fig(fig, "Support (%)", ""), config={"displayModeBar": False}, use_container_width=True)
 
         # Hộp mở rộng giải thích nguyên lý hoạt động 3 bước của FP-Tree
         with st.expander("FP-Growth tìm các tập này như thế nào"):
