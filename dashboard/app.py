@@ -450,7 +450,7 @@ with tab_rec:
                       <div class="why">Trong các đơn có <b>{esc(r['antecedent'])}</b>,
                         <b>{r['confidence']:.1%}</b> đơn mua thêm <b>{esc(r['item'])}</b>, cao gấp
                         {r['lift']:.2f} lần tỉ lệ mua món này nói chung.</div>
-                      <div class="fine">{r['support']:.2%} số đơn chứa cả hai · lift ×{r['lift']:.2f} · score = lift × confidence</div>
+                      <div class="fine">lift ×{r['lift']:.2f} · score = lift × confidence</div>
                     </div>""")
                 else:
                     # Nhãn gợi ý dự phòng từ danh sách bán chạy (fallback)
