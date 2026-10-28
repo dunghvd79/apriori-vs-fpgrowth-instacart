@@ -278,19 +278,24 @@ def dedupe_pairs(rules_df: pd.DataFrame) -> pd.DataFrame:
 st.sidebar.markdown("### Dữ liệu và ngưỡng")
 
 # 1. Tìm các tệp dữ liệu đã tiền xử lý sẵn trong data/processed/
-files = sorted(DATA_DIR.glob("*.parquet")) if DATA_DIR.exists() else []
+def by_size(f: Path) -> int:
+    """Sắp tệp theo số đơn của mẫu (10k, 50k, 100k) thay vì theo tên."""
+    digits = "".join(ch for ch in f.stem.split("_")[-1] if ch.isdigit())
+    return int(digits or 0)
+
+
+files = sorted(DATA_DIR.glob("transactions_product_*.parquet"), key=by_size) if DATA_DIR.exists() else []
 if not files:
-    files = sorted(DATA_DIR.glob("*.csv")) if DATA_DIR.exists() else []
+    files = sorted(DATA_DIR.glob("transactions_product_*.csv"), key=by_size) if DATA_DIR.exists() else []
 if not files:
     st.error("Chưa có dữ liệu trong `data/processed/`. Chạy `python src/preprocess.py` rồi tải lại trang.")
     st.stop()
 
 
 def file_label(f: Path) -> str:
-    """Tạo nhãn hiển thị dễ hiểu cho tệp: số đơn và phân loại (sản phẩm hay kệ hàng)."""
-    level = "kệ hàng" if "aisle" in f.stem else "sản phẩm"
+    """Tạo nhãn hiển thị dễ hiểu cho tệp: số đơn của mẫu."""
     size = f.stem.split("_")[-1]
-    return f"{size} đơn · mức {level}"
+    return f"{size} đơn"
 
 
 default_file = next((i for i, f in enumerate(files) if "product_10k" in f.name), 0)
@@ -405,6 +410,8 @@ with tab_rec:
             placeholder="Gõ tên sản phẩm, ví dụ Banana",
             on_change=lambda: st.session_state.update(hidden=None),
         )
+        st.button("Xóa giỏ hàng", on_click=set_cart, args=([],), width="stretch",
+                  disabled=not st.session_state["cart"])
         top_n = st.slider("Số gợi ý", 1, 10, 5)
 
     cart = st.session_state["cart"]
@@ -464,6 +471,33 @@ with tab_rec:
                     </div>""")
             st.markdown("".join(tags), unsafe_allow_html=True)
 
+            # Bảng giải thích thứ tự xếp hạng (chỉ các gợi ý từ luật, vì món dự phòng không có lift/confidence)
+            rule_recs = [r for r in recs if r["source"] == "rule"]
+            if len(rule_recs) >= 2:
+                with st.expander("Vì sao gợi ý được xếp theo thứ tự này?"):
+                    st.markdown(
+                        "Điểm xếp hạng = **lift × confidence**: ưu tiên món vừa có nhiều khách mua thêm "
+                        "(confidence), vừa liên quan thật chứ không chỉ vì vốn bán chạy (lift)."
+                    )
+                    st.dataframe(
+                        pd.DataFrame({
+                            "Hạng": range(1, len(rule_recs) + 1),
+                            "Món": [r["item"] for r in rule_recs],
+                            "Confidence (%)": [round(r["confidence"] * 100, 1) for r in rule_recs],
+                            "Lift": [round(r["lift"], 2) for r in rule_recs],
+                            "Score": [round(r["score"], 2) for r in rule_recs],
+                        }),
+                        width="stretch", hide_index=True,
+                    )
+                    top_lift = max(rule_recs, key=lambda r: r["lift"])
+                    if top_lift is not rule_recs[0]:
+                        first = rule_recs[0]
+                        st.caption(
+                            f"{top_lift['item']} có lift cao nhất ({top_lift['lift']:.2f}) nhưng chỉ "
+                            f"{top_lift['confidence']:.1%} khách mua thêm, nên xếp sau {first['item']} "
+                            f"(confidence {first['confidence']:.1%}, lift {first['lift']:.2f})."
+                        )
+
 
 # ==============================================================================
 # 8. TAB 2: LUẬT KẾT HỢP (ASSOCIATION RULES EXPLORER)
@@ -517,6 +551,7 @@ with tab_rules:
             "Nếu mua": rules_df["antecedents"].map(join_items),
             "Thì mua kèm": rules_df["consequents"].map(join_items),
             "Support (%)": (rules_df["support"] * 100).round(2),
+            "Số đơn có cả A và B": (rules_df["support"] * n_tx).round().astype(int),
             "Confidence (%)": (rules_df["confidence"] * 100).round(1),
             "Lift": rules_df["lift"].round(2),
         })
@@ -582,7 +617,10 @@ with tab_fi:
 
         # Bảng tra cứu danh sách tập phổ biến
         st.markdown("##### Tra cứu tập phổ biến")
-        q = st.text_input("Tìm theo tên món", placeholder="Ví dụ: Spinach")
+        f1, f2 = st.columns([3, 1])
+        q = f1.text_input("Tìm theo tên món", placeholder="Ví dụ: Spinach")
+        k_options = ["Tất cả"] + sorted(fi_df["length"].unique().tolist(), reverse=True)
+        k_pick = f2.selectbox("Số món trong tập (k)", k_options)
         fi_table = pd.DataFrame({
             "Tập món": fi_df["itemsets"].map(join_items),
             "k": fi_df["length"],
@@ -591,4 +629,7 @@ with tab_fi:
         })
         if q:
             fi_table = fi_table[fi_table["Tập món"].str.contains(q, case=False, regex=False)]
+        if k_pick != "Tất cả":
+            fi_table = fi_table[fi_table["k"] == k_pick]
+        st.caption(f"{len(fi_table):,} / {len(fi_df):,} tập")
         st.dataframe(fi_table, width="stretch", hide_index=True, height=360)

@@ -17,10 +17,10 @@ Chạy cả hai cài đặt trên cùng một tập giao dịch rồi so sánh:
 |---|---|---|---|---|
 | Sản phẩm, 10k đơn | 1% | 136 / 136 ✅ | 13 / 13 ✅ | 0,05 s / 2,1 s |
 | Sản phẩm, 50k đơn | 0,5% | 368 / 368 ✅ | 57 / 57 ✅ | 0,3 s / 28 s |
-| Kệ hàng, 98.491 đơn | 5% | 174 / 174 ✅ | 277 / 277 ✅ | 1,4 s / 1,4 s |
-| Kệ hàng, 30k đơn | 2% | 943 / 943 ✅ | (không so) | (không đo) |
+| Sản phẩm, 10k đơn | 0,2% | 1.698 / 1.698 ✅ | 332 / 332 ✅ | 0,2 s / 1,2 s |
+| Sản phẩm, 100k đơn | 0,2% | 1.538 / 1.538 ✅ | 234 / 234 ✅ | 2,2 s / 11 s |
 
-Cấu hình cuối là ca khó nhất: phải đệ quy sâu, với tập dài nhất 5 món.
+Hai cấu hình cuối là ca khó nhất: hàng nghìn tập phổ biến, có tập 3 món, cây điều kiện đệ quy nhiều tầng. (Trước 28/10/2026 nhóm còn kiểm trên dữ liệu mức kệ hàng; phần đó đã bỏ cùng với mức kệ.)
 
 Bản của nhóm nhanh hơn mlxtend ở mức sản phẩm vì mlxtend phải mã hóa dữ liệu thành ma trận one-hot có khoảng 16.000 cột. Đây không phải phép đo hiệu năng chuẩn (chỉ chạy một lần, không cô lập tiến trình), nên không nên đưa vào báo cáo như kết quả benchmark.
 

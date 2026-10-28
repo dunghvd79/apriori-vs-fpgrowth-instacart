@@ -43,16 +43,13 @@ Tab **Đánh giá** trên dashboard chạy đúng quy trình này với các ng�
 | 0,5% | 104 | 61,4% | 4,14% | 6,20% |
 | 0,2% | 647 | 75,3% | 5,77% | 6,20% |
 
-**Bộ 100k (số liệu dùng trong báo cáo):** 80.000 giỏ huấn luyện, 20.000 giỏ kiểm tra; mức kệ hàng là 78.793 và 19.698 giỏ.
+**Bộ 100k (số liệu dùng trong báo cáo):** 80.000 giỏ huấn luyện, 20.000 giỏ kiểm tra.
 
-| Mức | Support | Số luật | Coverage của luật | Hit@5: chỉ luật | Hit@5: chỉ bán chạy | Hit@5: luật + dự phòng |
-|---|---|---|---|---|---|---|
-| Sản phẩm | 1% | 30 | 47,4% | 2,41% | 5,49% | 5,51% |
-| Sản phẩm | 0,5% | 104 | 60,2% | 3,58% | 5,49% | 5,66% |
-| Sản phẩm | 0,2% | 626 | 74,3% | 5,08% | 5,49% | **6,17%** |
-| Kệ hàng | 10% | 46 | 79,9% | 25,65% | 34,73% | 34,73% |
-| Kệ hàng | 5% | 382 | 90,4% | 31,85% | 34,73% | 34,83% |
-| Kệ hàng | 2% | 3.415 | 97,4% | 34,71% | 34,73% | **35,51%** |
+| Support | Số luật | Coverage của luật | Hit@5: chỉ luật | Hit@5: chỉ bán chạy | Hit@5: luật + dự phòng |
+|---|---|---|---|---|---|
+| 1% | 30 | 47,4% | 2,41% | 5,49% | 5,51% |
+| 0,5% | 104 | 60,2% | 3,58% | 5,49% | 5,66% |
+| 0,2% | 626 | 74,3% | 5,08% | 5,49% | **6,17%** |
 
 Mức cải thiện đến từ việc hạ support:
 - Ở support 1%, luật + dự phòng gần như bằng mốc món bán chạy: 5,51% so với 5,49% trên bộ 100k, và 5,50% so với 5,50% trên bộ 10k.
@@ -69,4 +66,3 @@ Mức cải thiện đến từ việc hạ support:
 
 - Hạ support thấp hơn nữa (0,1%) trên bộ 100k đơn.
 - Đổi cách xếp hạng: chỉ dùng confidence, hoặc ưu tiên luật có vế trái dài hơn.
-- Đánh giá ở mức kệ hàng (aisle), nơi luật phủ gần hết.

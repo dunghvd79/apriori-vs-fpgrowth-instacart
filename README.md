@@ -78,19 +78,15 @@ apriori-vs-fpgrowth-instacart/
 │   └── processed/           # Dữ liệu giỏ hàng lồng nhau (.parquet & .csv: 10k, 50k, 100k)
 │       ├── transactions_product_10k.parquet / .csv   # Mẫu 10k đơn (mức sản phẩm)
 │       ├── transactions_product_50k.parquet / .csv   # Mẫu 50k đơn (mức sản phẩm)
-│       ├── transactions_product_100k.parquet / .csv  # Mẫu 100k đơn (mức sản phẩm)
-│       └── transactions_aisle_100k.parquet / .csv    # Mẫu 100k đơn (mức kệ hàng)
+│       └── transactions_product_100k.parquet / .csv  # Mẫu 100k đơn (mức sản phẩm)
 ├── src/
 │   ├── __init__.py          # Khởi tạo package
 │   ├── my_fpgrowth.py       # [CỐT LÕI] Thuật toán FP-Growth tự cài đặt (FP-Tree + slots + Recommender)
-│   ├── preprocess.py        # Tiền xử lý đơn hàng, lọc giỏ >= 2 món, xuất .parquet & .csv
-│   ├── mining.py            # Lớp phụ trợ mã hóa ma trận thưa và khai phá đối chứng
-│   └── benchmark.py         # Đo lường thực nghiệm độc lập (đa tiến trình, lấy mẫu RSS)
+│   └── preprocess.py        # Tiền xử lý đơn hàng, lọc giỏ >= 2 món, xuất .parquet & .csv
 ├── dashboard/
 │   └── app.py               # Web Dashboard phân tích giỏ hàng & gợi ý mua sắm (3 nghiệp vụ)
 ├── notebooks/
-│   ├── 01_eda.ipynb         # Khám phá phân bố dữ liệu Instacart và hiện tượng đuôi dài
-│   └── 02_experiments.ipynb # Thử nghiệm đối chiếu luật và khai phá
+│   └── 01_eda.ipynb         # Khám phá phân bố dữ liệu Instacart và hiện tượng đuôi dài
 ├── results/                 # Dữ liệu thực nghiệm offline lưu trữ (.csv)
 ├── requirements.txt         # Danh sách thư viện (pandas, numpy, pyarrow, fastparquet, streamlit...)
 ├── .streamlit/

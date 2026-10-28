@@ -1,4 +1,4 @@
 """
-Package src: Chứa các module tiền xử lý dữ liệu, cài đặt thuật toán Apriori, FP-Growth, 
-trích xuất luật kết hợp và đo lường benchmark.
+Package src: tiền xử lý dữ liệu Instacart (preprocess.py) và thuật toán FP-Growth tự cài đặt
+kèm sinh luật kết hợp, gợi ý mua kèm (my_fpgrowth.py).
 """
