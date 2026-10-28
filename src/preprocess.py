@@ -7,7 +7,6 @@ Chuyển đổi các đơn hàng thành danh sách giao dịch (Transactions) v�
     data/processed/transactions_product_10k.parquet
     data/processed/transactions_product_50k.parquet
     data/processed/transactions_product_100k.parquet
-    data/processed/transactions_aisle_100k.parquet
 
 Các mẫu được lấy LỒNG NHAU (10k ⊂ 50k ⊂ 100k): xáo trộn danh sách đơn hàng một lần
 với seed cố định rồi lấy N đơn đầu tiên. Nhờ vậy khi so sánh theo quy mô, khác biệt
@@ -63,25 +62,23 @@ def load_raw(raw_dir: Path, source: str = 'prior'):
     Đọc các bảng cần thiết với kiểu dữ liệu tối ưu RAM.
 
     Trả về:
-        (df_op, df_products) trong đó df_products đã có cột 'aisle' (tên kệ hàng).
+        (df_op, df_products) trong đó df_products gồm product_id và product_name.
     """
     import pandas as pd
     import numpy as np
 
     order_products_file = raw_dir / f'order_products__{source}.csv'
-    for f in [raw_dir / 'products.csv', raw_dir / 'aisles.csv', order_products_file]:
+    for f in [raw_dir / 'products.csv', order_products_file]:
         if not f.exists():
             raise FileNotFoundError(f"Không tìm thấy file: {f}")
 
-    print(f"\n[1/4] Đọc bảng sản phẩm và kệ hàng...")
+    print(f"\n[1/4] Đọc bảng sản phẩm...")
     df_products = pd.read_csv(
         raw_dir / 'products.csv',
-        usecols=['product_id', 'product_name', 'aisle_id'],
-        dtype={'product_id': np.int32, 'product_name': 'string', 'aisle_id': np.int16}
+        usecols=['product_id', 'product_name'],
+        dtype={'product_id': np.int32, 'product_name': 'string'}
     )
-    df_aisles = pd.read_csv(raw_dir / 'aisles.csv', dtype={'aisle_id': np.int16, 'aisle': 'string'})
-    df_products = df_products.merge(df_aisles, on='aisle_id', how='left')
-    print(f"      -> {len(df_products):,} sản phẩm, {len(df_aisles):,} kệ hàng.")
+    print(f"      -> {len(df_products):,} sản phẩm.")
 
     print(f"\n[2/4] Đọc chi tiết đơn hàng ({order_products_file.name})...")
     df_op = pd.read_csv(
@@ -117,26 +114,19 @@ def nested_sample_order_ids(df_op, sizes, min_basket_size: int, seed: int):
     return {n: shuffled[:n] for n in sorted(sizes)}
 
 
-def build_transactions(df_op, df_products, order_ids, level: str = 'product', min_basket_size: int = 1):
+def build_transactions(df_op, df_products, order_ids, min_basket_size: int = 1):
     """
-    Gom các dòng thuộc order_ids thành giao dịch.
+    Gom các dòng thuộc order_ids thành giao dịch, mỗi item là một tên sản phẩm.
 
     Tham số:
-        level: 'product' (tên sản phẩm) hoặc 'aisle' (tên kệ hàng, loại trùng trong mỗi đơn).
-        min_basket_size: áp lại quy tắc giỏ tối thiểu SAU khi gom. Cần cho mức kệ hàng,
-            vì một đơn nhiều sản phẩm có thể chỉ còn 1 kệ sau khi bỏ trùng.
+        min_basket_size: áp lại quy tắc giỏ tối thiểu sau khi gom (phòng khi phép nối làm mất dòng).
 
     Trả về:
         DataFrame gồm các cột: ['order_id', 'items', 'item_count']
     """
-    col = 'product_name' if level == 'product' else 'aisle'
+    col = 'product_name'
     subset = df_op[df_op['order_id'].isin(order_ids)]
     merged = subset.merge(df_products[['product_id', col]], on='product_id', how='inner')
-
-    if level == 'aisle':
-        # Bỏ kệ rỗng (NA) và nhãn 'missing' ("chưa phân loại", không phải kệ hàng thật)
-        merged = merged[merged[col].notna() & (merged[col] != 'missing')]
-        merged = merged.drop_duplicates(subset=['order_id', col])
 
     transactions = (
         merged.groupby('order_id')[col]
@@ -164,15 +154,13 @@ def main():
     parser.add_argument('--out_dir', type=str, default=None, help="Thư mục đầu ra (mặc định data/processed)")
     parser.add_argument('--source', type=str, default='prior', choices=['prior', 'train'], help="Nguồn: prior hoặc train")
     parser.add_argument('--sizes', type=int, nargs='+', default=[10000, 50000, 100000],
-                        help="Các mức lấy mẫu (lồng nhau) cho mức sản phẩm")
-    parser.add_argument('--aisle_size', type=int, default=100000,
-                        help="Mức mẫu dùng cho phân tích kệ hàng (0 = bỏ qua)")
+                        help="Các mức lấy mẫu (lồng nhau)")
     parser.add_argument('--min_basket_size', type=int, default=2, help="Kích thước giỏ hàng tối thiểu")
     parser.add_argument('--seed', type=int, default=42, help="Seed để tái lập kết quả lấy mẫu")
     parser.add_argument('--check_only', action='store_true', help="Chỉ kiểm tra sự tồn tại của file raw và thoát")
     args = parser.parse_args()
-    if any(n <= 0 for n in args.sizes) or args.aisle_size < 0 or args.min_basket_size < 1:
-        parser.error("--sizes phải > 0, --aisle_size >= 0, --min_basket_size >= 1")
+    if any(n <= 0 for n in args.sizes) or args.min_basket_size < 1:
+        parser.error("--sizes phải > 0, --min_basket_size >= 1")
 
     root = get_project_root()
     raw_dir = Path(args.raw_dir) if args.raw_dir else root / 'data' / 'raw'
@@ -193,7 +181,6 @@ def main():
         sys.exit(1)
 
     sizes = sorted(set(args.sizes))
-    all_sizes = sizes + ([args.aisle_size] if args.aisle_size > 0 else [])
 
     try:
         df_op, df_products = load_raw(raw_dir, args.source)
@@ -202,26 +189,21 @@ def main():
         sys.exit(1)
 
     print(f"\n[3/4] Lấy mẫu lồng nhau (seed={args.seed})...")
-    samples = nested_sample_order_ids(df_op, all_sizes, args.min_basket_size, args.seed)
+    samples = nested_sample_order_ids(df_op, sizes, args.min_basket_size, args.seed)
 
     print(f"\n[4/4] Tạo giao dịch và lưu file...")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    jobs = [('product', n) for n in sizes]
-    if args.aisle_size > 0:
-        jobs.append(('aisle', args.aisle_size))
+    for n in sizes:
+        df_tx = build_transactions(df_op, df_products, samples[n], min_basket_size=args.min_basket_size)
 
-    for level, n in jobs:
-        df_tx = build_transactions(df_op, df_products, samples[n], level=level,
-                                   min_basket_size=args.min_basket_size)
-        
         # 1. Lưu file .parquet (Tối ưu tốc độ & bộ nhớ cho thuật toán Mining)
-        out_parquet_path = out_dir / f"transactions_{level}_{size_tag(n)}.parquet"
+        out_parquet_path = out_dir / f"transactions_product_{size_tag(n)}.parquet"
         df_tx.to_parquet(out_parquet_path, engine='pyarrow', index=False)
         parquet_size_mb = out_parquet_path.stat().st_size / (1024 * 1024)
         
         # 2. Lưu file .csv (Mở xem trực tiếp trong Excel / Notepad)
-        out_csv_path = out_dir / f"transactions_{level}_{size_tag(n)}.csv"
+        out_csv_path = out_dir / f"transactions_product_{size_tag(n)}.csv"
         df_csv = df_tx.copy()
         # Chuyển list thành chuỗi phân cách bởi dấu ' | ' để không trùng với dấu phẩy trong tên sản phẩm
         df_csv['items'] = df_csv['items'].apply(' | '.join)
