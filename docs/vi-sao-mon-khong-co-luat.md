@@ -38,7 +38,7 @@ Danh mục Instacart có **đuôi dài**: vài món như chuối, dâu, bơ, rau
 1. **Cho báo cáo:** nêu rõ hạn chế này trong phần đánh giá. Nó cũng giải thích vì sao gợi ý theo luật chỉ đến được khoảng 47% số đơn kiểm tra (xem [danh-gia-goi-y.md](danh-gia-goi-y.md)).
 2. **Khi demo:**
    - Chọn món có trong nút chọn nhanh, vì đó là những món có nhiều luật nhất.
-   - Hoặc chuyển sang bộ dữ liệu **mức kệ hàng (aisle)**. Ở mức này chỉ có 133 kệ (đã bỏ nhãn `missing`), nên mỗi kệ xuất hiện trong nhiều đơn hơn và luật phủ được nhiều kệ hơn hẳn.
+   - Hoặc hạ support xuống 0,5% hay 0,2% ở thanh bên để có thêm luật.
 3. **Có thể cải tiến dashboard (chưa làm):**
    - Khi một món không có luật, nói rõ lý do. Ví dụ: "Soda chưa có luật: cặp phổ biến nhất (Soda + Zero Calorie Cola) chỉ có 16 đơn = 0,16%, dưới ngưỡng 1%." Đồng thời tách hẳn khối "món bán chạy chung" ra khỏi khối gợi ý mua kèm.
    - Đánh dấu và đưa lên đầu danh sách chọn những món có luật.

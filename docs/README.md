@@ -12,7 +12,7 @@ Thư mục này ghi lại các vấn đề nhóm đã thảo luận và kiểm c
 ## Bối cảnh
 
 - **Đề tài hiện tại:** Hệ thống gợi ý sản phẩm mua kèm bằng FP-Growth trên dữ liệu Instacart. Đề tài cũ là "So sánh Apriori và FP-Growth", nhóm đã đổi hướng vào ngày 20/10/2026.
-- **Dữ liệu:** các file trong `data/processed/` do `src/preprocess.py` sinh ra. Gồm mẫu lồng nhau 10k ⊂ 50k ⊂ 100k đơn ở mức sản phẩm và 100k đơn ở mức kệ hàng, seed 42, chỉ giữ giỏ có từ 2 món trở lên.
+- **Dữ liệu:** các file trong `data/processed/` do `src/preprocess.py` sinh ra. Gồm mẫu lồng nhau 10k ⊂ 50k ⊂ 100k đơn ở mức sản phẩm, seed 42, chỉ giữ giỏ có từ 2 món trở lên.
 - **Các con số trong tài liệu** đo ngày 20/10/2026, trên bộ 10k đơn mức sản phẩm, trừ khi có ghi khác.
 - **Số liệu Chương 4 của báo cáo** sinh ra bằng `python scripts/run_experiments.py` (khoảng 3 phút). Bảng được ghi vào `results/*.csv`, hình vào `results/figures/`. Thư mục `results/` nằm trong `.gitignore`, chạy lại script là có lại đủ.
 

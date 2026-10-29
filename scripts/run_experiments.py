@@ -7,12 +7,12 @@ Chạy toàn bộ thực nghiệm cho Chương 4 và xuất bảng (CSV) + biể
 Các phần:
   env      — cấu hình máy và phiên bản thư viện
   verify   — đối chiếu FP-Growth tự cài đặt với mlxtend
-  mining   — số tập phổ biến / số luật theo support, mức sản phẩm và mức kệ
+  mining   — số tập phổ biến / số luật theo support trên ba mẫu 10k, 50k, 100k
   rules    — luật tiêu biểu (cặp gắn kết nhất theo lift) + biểu đồ
   eval     — đánh giá gợi ý holdout 80/20: Coverage, Hit@k, so với món bán chạy
   case     — tình huống Soda: món có liên quan nhưng không có luật
 
-Mọi ngẫu nhiên dùng seed 42; cách chia holdout giống hệt tab Đánh giá của dashboard.
+Mọi ngẫu nhiên dùng seed 42; holdout chia 80/20 rồi giấu 1 món ngẫu nhiên trong mỗi đơn kiểm tra (mục 2.7 báo cáo).
 """
 
 import argparse
@@ -109,7 +109,7 @@ def part_verify():
     from mlxtend.preprocessing import TransactionEncoder
 
     configs = [("transactions_product_10k", None, 0.01), ("transactions_product_50k", None, 0.005),
-               ("transactions_aisle_100k", None, 0.05), ("transactions_aisle_100k", 30000, 0.02)]
+               ("transactions_product_10k", None, 0.002), ("transactions_product_100k", None, 0.002)]
     rows = []
     for name, n, sup in configs:
         txs = load(name)[:n] if n else load(name)
@@ -126,7 +126,7 @@ def part_verify():
         k1 = set(zip(rules.antecedents, rules.consequents))
         k2 = set(zip(r2.antecedents, r2.consequents))
         rows.append({
-            "Dữ liệu": f"{'Sản phẩm' if 'product' in name else 'Kệ hàng'}, " + f"{len(txs):,} giỏ".replace(",", "."),
+            "Dữ liệu": f"{len(txs):,} giỏ".replace(",", "."),
             "Support": f"{sup:.1%}".replace(".", ","),
             "Tập phổ biến (tự cài đặt)": len(a), "Tập phổ biến (mlxtend)": len(b),
             "Khớp tập & support": "Có" if a == b else "Không",
@@ -139,7 +139,6 @@ def part_verify():
 
 def part_mining():
     plan = [(f"transactions_product_{s}", (0.01, 0.005, 0.002)) for s in ("10k", "50k", "100k")]
-    plan.append(("transactions_aisle_100k", (0.10, 0.05, 0.02)))
     rows = []
     for name, sups in plan:
         txs = load(name)
@@ -149,7 +148,7 @@ def part_mining():
             antes = set().union(*rules.antecedents) if len(rules) else set()
             n_items = len({i for t in txs for i in t})
             rows.append({
-                "Mức": "Kệ hàng" if "aisle" in name else "Sản phẩm", "Số giỏ": len(txs), "Support": sup,
+                "Số giỏ": len(txs), "Support": sup,
                 "Tập 1 item": int(lens.get(1, 0)), "Tập 2 item": int(lens.get(2, 0)),
                 "Tập ≥3 item": int(lens[lens.index >= 3].sum()), "Tổng tập": len(fi),
                 "Số luật": len(rules), "Item có luật": len(antes),
@@ -178,10 +177,6 @@ def part_rules():
     _, rules_p, _ = mine(prod, 0.002)
     tp = top_pairs(rules_p)
     save(tp, "top_pairs_product_100k_s0.2")
-    aisle = load("transactions_aisle_100k")
-    _, rules_a, _ = mine(aisle, 0.02)
-    ta = top_pairs(rules_a[(rules_a.antecedents.map(len) == 1) & (rules_a.consequents.map(len) == 1)])
-    save(ta, "top_pairs_aisle_100k_s2")
 
     # Hình: phân tán confidence – lift (sản phẩm 100k, support 0,2%)
     fig, ax = plt.subplots(figsize=(6.4, 3.8))
@@ -195,19 +190,6 @@ def part_rules():
     ax.set_xlabel("Confidence (%)")
     ax.set_ylabel("Lift (thang log)")
     savefig(fig, "rules_scatter_product_100k")
-
-    # Hình: 10 cặp kệ hàng gắn kết nhất (tên kệ ngắn nên vẽ được; cặp sản phẩm trình bày bằng bảng)
-    fig, ax = plt.subplots(figsize=(6.4, 3.6))
-    labels = [f"{a} + {b}" for a, b in zip(ta.A, ta.B)]
-    ax.barh(range(len(ta)), ta.Lift, color=C_RULE, height=0.62)
-    ax.set_yticks(range(len(ta)), labels, fontsize=10)
-    ax.invert_yaxis()
-    ax.grid(axis="y", visible=False)
-    for i, v in enumerate(ta.Lift):
-        ax.text(v + 0.04, i, f"{v:.2f}".replace(".", ","), va="center", fontsize=10, color=INK)
-    ax.set_xlabel("Lift")
-    ax.set_xlim(0, ta.Lift.max() * 1.12)
-    savefig(fig, "top_pairs_aisle_100k")
 
 
 def split_holdout(txs, ratio=0.2):
@@ -252,52 +234,41 @@ def evaluate(txs, sup):
 
 def part_eval():
     plt = plt_setup()
-    plan = [("Sản phẩm", "transactions_product_100k", (0.01, 0.005, 0.002)),
-            ("Kệ hàng", "transactions_aisle_100k", (0.10, 0.05, 0.02))]
+    name, sups = "transactions_product_100k", (0.01, 0.005, 0.002)
+    txs = load(name)
+    print(f"  {len(txs):,} giỏ")
     rows = []
-    for level, name, sups in plan:
-        txs = load(name)
-        print(f"  {level}: {len(txs):,} giỏ")
-        for sup in sups:
-            rows += [dict(r, **{"Mức": level}) for r in evaluate(txs, sup)]
+    for sup in sups:
+        rows += evaluate(txs, sup)
     df = pd.DataFrame(rows)
     save(df.drop(columns="key"), "eval_holdout")
 
-    # Hình: Hit@5 theo support, hai mức (small multiples, mỗi mức một trục riêng)
-    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.3), sharey=False)
-    for ax, (level, _, sups) in zip(axes, plan):
-        sub = df[df["Mức"] == level]
-        xs = range(len(sups))
-        for m, label, color in METHODS:
-            ys = [sub[(sub.key == m) & (sub.Support == s)]["Hit@5 (%)"].iloc[0] for s in sups]
-            ls = "--" if m == "popular" else "-"
-            ax.plot(xs, ys, ls, color=color, linewidth=2, marker="o", markersize=6, label=label)
-        ax.set_xticks(list(xs), [f"{s:.1%}".replace(".", ",") for s in sups])
-        ax.set_title(f"Mức {level.lower()}", color=INK)
-        ax.set_xlabel("Support tối thiểu")
-        ax.set_ylim(bottom=0)
-    axes[0].set_ylabel("Hit@5 (%)")
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False, bbox_to_anchor=(0.5, -0.08))
-    fig.tight_layout()
+    # Hình: Hit@5 theo support
+    fig, ax = plt.subplots(figsize=(6.4, 3.6))
+    xs = range(len(sups))
+    for m, label, color in METHODS:
+        ys = [df[(df.key == m) & (df.Support == s)]["Hit@5 (%)"].iloc[0] for s in sups]
+        ls = "--" if m == "popular" else "-"
+        ax.plot(xs, ys, ls, color=color, linewidth=2, marker="o", markersize=6, label=label)
+    ax.set_xticks(list(xs), [f"{s:.1%}".replace(".", ",") for s in sups])
+    ax.set_xlabel("Support tối thiểu")
+    ax.set_ylabel("Hit@5 (%)")
+    ax.set_ylim(bottom=0)
+    ax.legend(loc="lower center", ncol=3, frameon=False, bbox_to_anchor=(0.5, -0.38))
     savefig(fig, "eval_hit5_by_support")
 
-    # Hình: Hit@k theo k, ở ngưỡng thấp nhất của mỗi mức
-    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.3))
-    for ax, (level, _, sups) in zip(axes, plan):
-        sub = df[(df["Mức"] == level) & (df.Support == sups[-1])]
-        for m, label, color in METHODS:
-            r = sub[sub.key == m].iloc[0]
-            ls = "--" if m == "popular" else "-"
-            ax.plot(KS, [r[f"Hit@{k} (%)"] for k in KS], ls, color=color, linewidth=2, marker="o", markersize=6, label=label)
-        ax.set_xticks(KS)
-        ax.set_title(f"Mức {level.lower()}, support {sups[-1]:.1%}".replace(".", ","), color=INK)
-        ax.set_xlabel("Số gợi ý k")
-        ax.set_ylim(bottom=0)
-    axes[0].set_ylabel("Hit@k (%)")
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False, bbox_to_anchor=(0.5, -0.08))
-    fig.tight_layout()
+    # Hình: Hit@k theo k, ở ngưỡng thấp nhất
+    fig, ax = plt.subplots(figsize=(6.4, 3.6))
+    sub = df[df.Support == sups[-1]]
+    for m, label, color in METHODS:
+        r = sub[sub.key == m].iloc[0]
+        ls = "--" if m == "popular" else "-"
+        ax.plot(KS, [r[f"Hit@{k} (%)"] for k in KS], ls, color=color, linewidth=2, marker="o", markersize=6, label=label)
+    ax.set_xticks(KS)
+    ax.set_xlabel("Số gợi ý k")
+    ax.set_ylabel("Hit@k (%)")
+    ax.set_ylim(bottom=0)
+    ax.legend(loc="lower center", ncol=3, frameon=False, bbox_to_anchor=(0.5, -0.38))
     savefig(fig, "eval_hitk_by_k")
 
 
